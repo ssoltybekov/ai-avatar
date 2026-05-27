@@ -1,0 +1,26 @@
+# .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+
+.env
+
+data/raw/
+data/processed/
+
+.idea/
+.vscode/
+*.swp
+
+.DS_Store
+Thumbs.db
+
+*.log
+logs/
