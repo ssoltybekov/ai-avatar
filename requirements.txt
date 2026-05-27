@@ -1,0 +1,23 @@
+# requirements.txt
+
+# --- Web Framework ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+# [standard] включает uvloop (быстрый event loop) и watchfiles (hot reload)
+
+# --- HTTP Client ---
+httpx==0.27.2
+
+# --- Qdrant ---
+qdrant-client==1.11.1
+
+# --- Embeddings ---
+sentence-transformers==3.1.1
+
+# --- Config ---
+pydantic-settings==2.5.2
+
+# --- Utils ---
+python-dotenv==1.0.1
+
+tqdm==4.66.5
