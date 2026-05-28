@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.config import get_settings
 from app.core.qdrant_client import get_qdrant_client, ensure_collection_exists
+from app.core.ollama_client import get_ollama_client, verify_ollama_models
 
 settings = get_settings()
 
@@ -15,8 +16,12 @@ async def lifespan(app: FastAPI):
     qdrant = get_qdrant_client()
     ensure_collection_exists(qdrant)
 
+    ollama = get_ollama_client()
+    verify_ollama_models(ollama)
+
     yield
 
+    ollama.close()
     print("Shutting down AI Avatar API")
 
 app = FastAPI(
@@ -29,20 +34,36 @@ app = FastAPI(
 @app.get("/health", tags=["System"])
 async def health_check():
     qdrant = get_qdrant_client()
+    ollama = get_ollama_client()
 
     try:
         collections = [c.name for c in qdrant.get_collections().collections]
-        qdrant_ok = settings.qdrant_collection_name in collections
+        qdrant_status = (
+            "ok" if settings.qdrant_collection_name in collections
+            else "collection missing"
+        )
     except Exception as e:
-        return {
-            "status": "degraded",
-            "qdrant": f"error: {str(e)}",
-        }
+        qdrant_status = f"error: {e}"
+    
+    try:
+        response = ollama.get("/api/tags")
+        models = [m["name"] for m in response.json().get("models", [])]
+        ollama_status = "ok" if models else "no models"
+    except Exception as e:
+        ollama_status = f"error: {e}"
+
+    overall = (
+        "ok" if qdrant_status == "ok" and ollama_status == "ok"
+        else "degraded"
+    )
 
     return {
-        "status": "ok",
+        "status": overall,
         "version": "0.1.0",
-        "qdrant": "ok" if qdrant_ok else "collection missing",
+        "services": {
+            "qdrant": qdrant_status,
+            "ollama": ollama_status,
+        },
         "collection": settings.qdrant_collection_name,
     }
 
